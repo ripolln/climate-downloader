@@ -12,7 +12,7 @@ import numpy as np
 # dev: override library 
 sys.path.insert(0, op.join(op.dirname(__file__), '..', '..'))
 
-# bluemath climate_downloader csiro module 
+# bluemath climate_downloader gebco and gshhg modules
 from climate_downloader import gebco, gshhg
 
 
