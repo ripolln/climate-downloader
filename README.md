@@ -111,6 +111,28 @@ p_nc_ib = op.join(os.getcwd(), 'allstorms.ibtracks_wmo.nc')
 noaa.download_ibtracs_all(p_nc_ib)
 ```
 
+### Extract bathymetry and shoreline from GEBCO and GSHHG databases 
+
+```python
+import os
+import os.path as op
+import numpy as np
+
+# gebco and gshhg modules
+from climate_downloader import gebco, gshhg
+
+# extraction query
+lon1_q, lon2_q = 144, 145  # -180 / 180
+lat1_q, lat2_q = 13, 14   # -90 / 90
+
+p_res = op.join(os.getcwd(), 'resources')  # GEBCO and GSHHG complete databases
+
+# GEBCO: extract bathymetry
+xds_depth = gebco.extract_bathymetry(p_res, lon1_q, lat1_q, lon2_q, lat2_q)
+
+# GSHHG: extract shoreline
+np_shore = gshhg.extract_shoreline(p_res, lon1_q, lat1_q, lon2_q, lat2_q)
+```
 
 ## Apps:
 
