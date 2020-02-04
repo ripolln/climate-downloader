@@ -12,9 +12,6 @@ Climate data download toolbox.
 ## Documentation
 
 
-## Project Map
-
-
 ## Install
 - - -
 
