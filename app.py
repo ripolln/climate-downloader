@@ -82,7 +82,7 @@ def description_card():
     return html.Div(
         id="description-card",
         children=[
-            html.H3("Climate Downloader"),
+            html.H3("Climate Downloader (*DEMO APP*)"),
             html.H5("CSIRO Wave Hindcast Aggregate"),
 
             # TODO: make it clickable
