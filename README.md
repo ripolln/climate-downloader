@@ -36,6 +36,13 @@ Then install climate downloader:
    python setup.py test
 ```
 
+### GEBCO and GSHHG databases
+
+GEBCO global bathymetric database can be downloaded from [gebco.net](https://www.gebco.net/data_and_products/gridded_bathymetry_data/)
+
+GSHHG global shorelines database can be downloaded from [noaa.gov](https://www.ngdc.noaa.gov/mgg/shorelines/)
+
+
 ## Examples:
 - - -
 
