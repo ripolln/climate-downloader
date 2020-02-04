@@ -2,7 +2,7 @@ import dash
 import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
-from dash.dependencies import Input, Output, State, ClientsideFunction
+from dash.dependencies import Input, Output, State
 import plotly.express as px
 
 import os.path as op
@@ -36,10 +36,11 @@ app.config.suppress_callback_exceptions = True
 
 # Path
 BASE_PATH = pathlib.Path(__file__).parent.resolve()
-ASSETS_PATH = BASE_PATH.joinpath("assets").resolve()
 
+
+# TODO: necesario?
+ASSETS_PATH = BASE_PATH.joinpath("assets").resolve()
 assets_grid_coords = op.join(ASSETS_PATH, "gridded_coords")
-assets_logos = op.join(ASSETS_PATH, "logos")
 
 
 ## AUX.
@@ -232,7 +233,11 @@ app.layout = html.Div(
         html.Div(
             id="banner",
             className="banner",
-            children=[html.Img(src=app.get_asset_url("plotly_logo.png"))],
+            children=[
+                html.Img(src=app.get_asset_url("plotly_logo.png")),
+                html.Img(src=app.get_asset_url("logo_bm.png")),
+                html.Img(src=app.get_asset_url("logo_go.jpg")),
+            ],
         ),
 
         # Left column
