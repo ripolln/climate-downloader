@@ -13,7 +13,6 @@ Climate data download toolbox.
 
 
 ## Install
-- - -
 
 The source code is currently hosted on GitLab at: [climate downloader](https://gitlab.com/geoocean/bluemath/climate-downloader)
 
@@ -44,11 +43,10 @@ GSHHG global shorelines database can be downloaded from [noaa.gov](https://www.n
 
 
 ## Examples:
-- - -
 
 ### Download a set of points and an area from CSIRO database
 
-```
+```python
 import os
 import os.path as op
 
@@ -86,7 +84,7 @@ csiro.download_gridded(p_nc_grid, l_points, gc)
 
 ### Download Madden-Julian Oscillation 
 
-```
+```python
 import os
 import os.path as op
 
@@ -101,7 +99,7 @@ mjo.download(p_nc_mjo, init_year=y1)
 
 ### Download IBTraCS 
 
-```
+```python
 import os
 import os.path as op
 
@@ -115,7 +113,6 @@ noaa.download_ibtracs_all(p_nc_ib)
 
 
 ## Apps:
-- - -
 
 Currently an incomplete conceptual demonstration web app of this toolbox usage can be found at [herokuapp](https://climate-downloader.herokuapp.com/)
 
