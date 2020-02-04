@@ -8,6 +8,8 @@ Climate data download toolbox.
   Can use a list of points [(lon1, lat1), ... (lonN, latN)] or a grid area limits (lon1, lat1, lon2, lat2) 
 - [mjo](./climate_downloader/mjo.py): Download Madden Julian Oscillation from <http://www.bom.gov.au/climate/mjo/> 
 - [noaa](./climate_downloader/noaa.py): Download IBTrACS (International Best Track Archive for Climate Stewardship) storms from <ftp://eclipse.ncdc.noaa.gov/pub/ibtracs>
+- [gebco](./climate_downloader/gebco.py): GEBCO global bathymetric database extraction module <https://www.gebco.net/data_and_products/gridded_bathymetry_data/>
+- [gsshg](./climate_downloader/gsshg.py): GSSHG global shorelines database <https://www.ngdc.noaa.gov/mgg/shorelines/>
 
 ## Documentation
 
