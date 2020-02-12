@@ -3,7 +3,9 @@ import dash_table
 import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Input, Output, State
+
 import plotly.express as px
+import plotly.graph_objects as go
 
 import os.path as op
 import numpy as np
@@ -12,6 +14,7 @@ import xarray as xr
 import datetime
 from datetime import datetime as dt
 import pathlib
+
 
 
 
@@ -29,6 +32,7 @@ dt_2 = dt(2019,11,1)
 app = dash.Dash(
     __name__,
     meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
+    external_stylesheets=["https://codepen.io/chriddyp/pen/bWLwgP.css"],
 )
 
 server = app.server
@@ -72,7 +76,6 @@ def get_grid_info(sel_grid):
     return coords, attrs
 
 
-
 ## DASH COMPONENTS
 
 def description_card():
@@ -82,7 +85,6 @@ def description_card():
     return html.Div(
         id="description-card",
         children=[
-            html.H3("Climate Downloader (*DEMO APP*)"),
             html.H5("CSIRO Wave Hindcast Aggregate"),
 
             # TODO: make it clickable
@@ -98,64 +100,256 @@ def description_card():
         ],
     )
 
+def dropdown_grid():
+    """
+    :return: A dcc.Dropdown containing controls for chosing a grid.
+    """
+
+    return dcc.Dropdown(
+        id="grid-select",
+        options=[{"label": i, "value": i} for i in l_grid],
+        value=l_grid[0],
+    )
+
+
+tabs_div_h = '225px'
+
+def input_point_list():
+    """
+    :return: A html.Div containing controls for point list selection
+    """
+
+    return html.Div(
+        id='input-point-list',
+        children=[
+            html.Plaintext(
+                'Lon',
+                style={'width': '19%', 'display': 'inline-block'},
+            ),
+
+            dcc.Input(
+                id='input-point-lon',
+                type = 'number',
+                placeholder = '0.00',
+                style={'width': '30%', 'display': 'inline-block'},
+            ),
+
+            html.Plaintext(
+                'Lat',
+                style={'width': '19%', 'display': 'inline-block',
+                       'margin-left':'2%'},
+            ),
+
+            dcc.Input(
+                id='input-point-lat',
+                type = 'number',
+                placeholder = '0.00',
+                style={'width': '30%', 'display': 'inline-block'},
+            ),
+
+            dash_table.DataTable(
+                id='input-point-table',
+                columns=[{'name':x, 'id':x} for x in ['longitude', 'latitude']],
+                data=[],
+                style_cell={
+                    'textAlign': 'left',
+                    'maxWidth': 0, 'maxHeight': 0,
+                    'overflowY': 'scroll',
+                    'font_size': '12px',
+                },
+                style_table={
+                    'height': '160px',
+                    'overflowY': 'scroll'
+                },
+                row_deletable=True,
+            ),
+        ],
+        style={
+            'height': tabs_div_h,
+        },
+    )
+
+def input_bounding_box():
+    """
+    :return: A html.Div containing controls for bounding box selection
+    """
+
+    return html.Div(
+        id='input-bounding-box',
+        children = [
+            html.Plaintext(
+                'N',
+                style={
+                    'width': '14%', 'display': 'inline-block',
+                    'margin-left':'30%', 'margin-top':'10%',
+                },
+            ),
+
+            dcc.Input(
+                id='input-bb-N',
+                type = 'number',
+                placeholder = '0.00',
+                style={
+                    'width': '30%', 'display': 'inline-block',
+                    'margin-right':'25%'
+                },
+            ),
+
+            html.Plaintext(
+                'W',
+                style={
+                    'width': '14%', 'display': 'inline-block',
+                    'margin-left': '5%'
+                },
+            ),
+
+            dcc.Input(
+                id='input-bb-W',
+                type = 'number',
+                placeholder = '0.00',
+                style={'width': '30%', 'display': 'inline-block'},
+            ),
+
+            html.Plaintext(
+                'E',
+                style={
+                    'width': '14%', 'display': 'inline-block',
+                    'margin-left': '7%',
+                },
+            ),
+
+            dcc.Input(
+                id='input-bb-E',
+                type = 'number',
+                placeholder = '0.00',
+                style={'width': '30%', 'display': 'inline-block'},
+            ),
+
+            html.Plaintext(
+                'S',
+                style={
+                    'width': '14%', 'display': 'inline-block',
+                    'margin-left':'30%'
+                },
+            ),
+
+            dcc.Input(
+                id='input-bb-S',
+                type = 'number',
+                placeholder = '0.00',
+                style={'width': '30%', 'display': 'inline-block'},
+            ),
+
+        ],
+        style={
+            'height': tabs_div_h,
+        },
+    )
+
+def tabs_subset_sel():
+    """
+    :return: A html.Div containing controls for chosing a subset (points/bbox).
+    """
+
+    return html.Div(
+        children=[
+            dcc.Tabs(
+                id='tabs-subset-select',
+                value='tab-1',
+                children = [
+                    dcc.Tab(
+                        label = 'Point List',
+                        value = 'tab-1',
+                        children = [input_point_list()],
+                    ),
+                    dcc.Tab(
+                        label = 'Bounding Box',
+                        value = 'tab-2',
+                        children = [input_bounding_box()],
+                    ),
+                ]
+            ),
+            dcc.ConfirmDialogProvider(
+                id='reset-btn',
+                children = [
+                    html.Button(
+                        children="Reset", n_clicks=0,
+                        style={'width': '50%', 'display': 'inline-block',
+                            'margin-left':'50%'},
+                    ),
+                ],
+                message = 'Reset subset selection?',
+            ),
+        ],
+    )
+
+def date_picker():
+    """
+    :return: A html.Div containing a date range picker
+    """
+
+    return html.Div(
+        dcc.DatePickerRange(
+            id="date-picker-select",
+            start_date = dt_1,
+            end_date = dt_2,
+            min_date_allowed = dt_1,
+            max_date_allowed = dt_2,
+            style={'width': '100%', 'display': 'inline-block'},
+        ),
+    )
+
+def download_menu():
+    """
+    :return: A html.Div containing download menu
+    """
+
+    return html.Div(
+        children = [
+            dcc.Input(
+                id='input-download-folder',
+                placeholder = './climate_downloader/',
+                style={'width': '100%' },
+            ),
+            dcc.ConfirmDialogProvider(
+                id="download-btn",
+                children = [
+                    html.Button(
+                        children="Download", n_clicks=0,
+                        style={
+                            'width': '50%', 'display': 'inline-block',
+                            'margin-left': '50%',
+                        },
+                    ),
+                ],
+            ),
+        ],
+    )
+
+
 def generate_control_card():
     """
     :return: A Div containing controls for graphs.
     """
-    sw = 350
 
     return html.Div(
         id="control-card",
         children=[
-            html.P("Select Grid"),
-            dcc.Dropdown(
-                id="grid-select",
-                options=[{"label": i, "value": i} for i in l_grid],
-                value=l_grid[0],
-            ),
+            html.P("1. Select Hindcast Grid"),
+            dropdown_grid(),
             html.Br(),
-            html.P("Select Start -> End Time"),
-            html.Div(
-                dcc.DatePickerRange(
-                    id="date-picker-select",
-                    start_date = dt_1,
-                    end_date = dt_2,
-                    min_date_allowed = dt_1,
-                    max_date_allowed = dt_2,
-                    #initial_visible_month=dt(2014, 1, 1),  # TODO ??
-                ),
-                className='row',
-            ),
+
+            html.P("2. Select Points / Bounding Box"),
+            tabs_subset_sel(),
             html.Br(),
+
+            html.P("3. Select Timi Limits"),
+            date_picker(),
             html.Br(),
-            html.P("Download Points"),
-            html.Div(
-                id="reset-btn-outer",
-                children=html.Button(id="reset-btn", children="Reset", n_clicks=0),
-                style={'width': '43%', 'display': 'inline-block'},
-            ),
-            html.Div(
-                id="download-btn-outer",
-                children=html.Button(id="download-btn", children="Download", n_clicks=0),
-                style={'width': '50%', 'display': 'inline-block'},
-            ),
+
+            html.P("4. Download Data"),
+            download_menu(),
             html.Br(),
-            html.Br(),
-            html.Div(
-                dash_table.DataTable(
-                    id='table-points',
-                    columns=[{'name':x, 'id':x} for x in ['longitude', 'latitude']],
-                    data=[],
-                    style_cell={
-                        'textAlign': 'left',
-                        'maxWidth': 0, 'maxHeight': 0,
-                        'overflowY': 'scroll',
-                        'font_size': '12px',
-                    },
-                    row_deletable=True
-                ),
-            style={'width':sw},
-            ),
         ],
     )
 
@@ -170,21 +364,20 @@ def generate_data_map(sel_grid):
     grid_coords, _ = get_grid_info(sel_grid)
 
     # map
-    # TODO: acelerar
-    fig = px.scatter_mapbox(
-        grid_coords,
-        lat="lat", lon="lon",
-        #hover_name="City", hover_data=["State", "Population"],
-        color_discrete_sequence=["red"],
-        zoom=2, #height=700
+    fig = go.Figure(data=go.Scattermapbox(
+        lon = grid_coords['lon'].values,
+        lat = grid_coords['lat'].values,
+        mode = 'markers',
+        marker = dict(
+            color='red',
+            size=5,
+        ),
+        #selected = dict(
+        #    marker={'color':'yellow'},
+        #),
     )
-    # traces
-    fig.update_traces(
-        marker = {
-            'size': 5,
-            #'opacity':0.7,
-        }
     )
+
     # figure layout
     fig.update_layout(
         mapbox_style="white-bg",
@@ -223,33 +416,40 @@ def generate_table_metadata(ats):
 
     return dt
 
+def top_banner():
+    """
+    :return: A Div containing dashboard title & descriptions.
+    """
+
+    return html.Div(
+        id="banner",
+        className="banner",
+        children=[
+            html.Img(src=app.get_asset_url("plotly_logo.png")),
+            html.Img(src=app.get_asset_url("logo_bm.png")),
+            html.Img(src=app.get_asset_url("logo_go.jpg")),
+            html.H3("Climate Downloader (*INCOMPLETE DEMO APP*)"),
+        ],
+    )
 
 ## APP LAYOUT
 
 app.layout = html.Div(
     id="app-container",
     children=[
-        # Banner
-        html.Div(
-            id="banner",
-            className="banner",
-            children=[
-                html.Img(src=app.get_asset_url("plotly_logo.png")),
-                html.Img(src=app.get_asset_url("logo_bm.png")),
-                html.Img(src=app.get_asset_url("logo_go.jpg")),
-            ],
-        ),
+        # Top banner
+        top_banner(),
 
         # Left column
         html.Div(
             id="left-column",
             className="four columns",
-            children=[description_card(), generate_control_card()]
-            + [
-                html.Div(
-                    ["initial child"], id="output-clientside", style={"display": "none"}
-                )
-            ],
+            children=[description_card(), generate_control_card()],
+            #+ [
+            #    html.Div(
+            #        ["initial child"], id="output-clientside", style={"display": "none"}
+            #    )
+            #],
             style={'width':370},
         ),
 
@@ -273,12 +473,12 @@ app.layout = html.Div(
                     children=[
                         html.B("Opendap netCDF4 files attributes"),
                         html.Hr(),
-                        html.Div(id="metadata_table"),   #children=initialize_table()),
+                        html.Div(id="metadata_table"),
                     ],
                 ),
             ],
         ),
-        html.Div(id='hidden-div', style={'display':'none'}) # null output
+        html.Div(id='hidden-div', style={'display':'none'}), # null output
     ],
 )
 
@@ -305,10 +505,10 @@ def update_grid_map_metadata(sel_grid):
     return generate_data_map(sel_grid), generate_table_metadata(attrs)
 
 @app.callback(
-    Output('table-points', 'data'),
-    [Input('grid_coords_map', 'clickData'), Input('reset-btn', 'n_clicks'),
+    Output('input-point-table', 'data'),
+    [Input('grid_coords_map', 'clickData'), Input('reset-btn', 'submit_n_clicks'),
      Input('grid-select','value')],
-    [State('table-points', 'data')]
+    [State('input-point-table', 'data')]
 )
 def handle_row(clickData, reset_click, grid_dropdown, rows):
 
@@ -316,6 +516,7 @@ def handle_row(clickData, reset_click, grid_dropdown, rows):
     ctx = dash.callback_context
     if ctx.triggered:
         prop_id = ctx.triggered[0]["prop_id"].split(".")[0]
+
         if prop_id in["reset-btn", "grid-select"]:
             return []
 
@@ -336,14 +537,49 @@ def handle_row(clickData, reset_click, grid_dropdown, rows):
 
     return rows
 
+
+@app.callback(
+    [Output('input-bb-N', 'value'), Output('input-bb-S', 'value'),
+     Output('input-bb-W', 'value'), Output('input-bb-E', 'value')],
+    [Input('grid_coords_map', 'selectedData'), Input('reset-btn', 'submit_n_clicks')])
+def display_bbox_data(selectedData, reset_click):
+    lon_W, lon_E = 0, 0
+    lat_S, lat_N = 0, 0
+
+    # Find if reset click 
+    ctx = dash.callback_context
+    if ctx.triggered:
+        prop_id = ctx.triggered[0]["prop_id"].split(".")[0]
+        if prop_id in ["reset-btn", "grid-select"]:
+            return [lat_N, lat_S, lon_W, lon_E]
+
+    if selectedData != None:
+        sdata = selectedData['range']['mapbox']
+        lons = [sdata[0][0], sdata[1][0]]
+        lats = [sdata[0][1], sdata[1][1]]
+        lon_W, lon_E = np.min(lons), np.max(lons)
+        lat_S, lat_N = np.min(lats), np.max(lats)
+
+    return [lat_N, lat_S, lon_W, lon_E]
+
+
+
 @app.callback(
     Output('hidden-div', 'children'),
-    [Input('table-points', 'data'), Input('download-btn', 'n_clicks'),
+    [Input('download-btn', 'submit_n_clicks'),
+     Input('tabs-subset-select','value'),
+     Input('input-point-table', 'data'),
+     Input('input-bb-N', 'value'), Input('input-bb-S', 'value'),
+     Input('input-bb-W', 'value'), Input('input-bb-E', 'value'),
      Input('date-picker-select', 'start_date'),
      Input('date-picker-select', 'end_date'),
      Input('grid-select','value')],
 )
-def download_data(rows, down_click, start_date, end_date, grid_sel):
+def download_data(
+    down_click, tab_val,
+    points_rows,
+    bbox_N, bbox_S, bbox_W, bbox_E,
+    start_date, end_date, grid_sel):
 
     # Find if download click 
     ctx = dash.callback_context
@@ -352,11 +588,17 @@ def download_data(rows, down_click, start_date, end_date, grid_sel):
         if prop_id == "download-btn":
 
             # TODO connect csiro downloader
+            if tab_val == 'tab-1':
+                print('Point List')
+                print(points_rows)
+            elif tab_val == 'tab-2':
+                print('Bounding Box')
+                print(bbox_N, bbox_S, bbox_W, bbox_E)
+
             print()
-            print('download {0}  -> {1} from {2}'.format(
+            print('time: {0}  -> {1}        grid: {2}'.format(
                 start_date, end_date, grid_sel))
 
-            print(rows)
             return []
 
 
