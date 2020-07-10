@@ -34,6 +34,27 @@ def join_ncs(p_ncs_folder, p_out_nc):
     p_out_nc     - path to output netcdf file
     '''
 
+    def preproc_var_names(xds):
+        'fix 201305 variable names change'
+
+        # fix spec
+        if 'efth' in xds.keys():
+            return xds.rename({
+                'efth':'Efth',
+                'dpt':'depth',
+                'wnd':'u10m',
+                'wnddir':'udir',
+                'cur':'curr',
+                'curdir':'currdir'})
+
+        # TODO fix gridded
+        elif False:
+            return xds.rename({})
+
+        else:
+            return xds
+
+
     chk = 12 # n files for packs 
 
     # clean previous packs
@@ -55,7 +76,10 @@ def join_ncs(p_ncs_folder, p_out_nc):
         pack = l_ncs[:chk]
         l_ncs = l_ncs[chk:]
 
-        xds_pack = xr.open_mfdataset(pack)
+        xds_pack = xr.open_mfdataset(
+            pack, combine='by_coords',
+            preprocess=preproc_var_names,
+        )
         p_pack = op.join(p_ncs_folder, 'xds_packed_{0:03d}.nc'.format(c))
         xds_pack.to_netcdf(p_pack,'w')
         xds_pack.close()
@@ -65,7 +89,7 @@ def join_ncs(p_ncs_folder, p_out_nc):
     l_packs = sorted(
         [op.join(p_ncs_folder,n) for n in os.listdir(p_ncs_folder) if
          n.startswith('xds_packed_')])
-    xds_out = xr.open_mfdataset(l_packs)
+    xds_out = xr.open_mfdataset(l_packs, combine='by_coords')
 
     # uncompressed
     xds_out.to_netcdf(p_out_nc,'w')
