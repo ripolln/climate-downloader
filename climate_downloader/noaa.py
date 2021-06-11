@@ -17,46 +17,28 @@ import numpy as np
 import xarray as xr
 
 
-def download_ibtracs_all(p_ncfile):
+def download_ibtracs_all(p_store):
     '''
-    Download storms (Allstorms.ibtracs_all) netcdf from NOAA
-
-    ftp file name: Allstorms.ibtracs_all.v03rXX.nc.
-    ftp wind velocity in knots: x1.82 km/h
+    Download storms IBTrACS.ALL.v04r00.nc
     '''
 
-    # default parameters
-    # TODO: update version
-    ftp_down = 'ftp://eclipse.ncdc.noaa.gov/pub/ibtracs/v03r10/wmo/netcdf/'
-    fil_down = 'Allstorms.ibtracs_wmo.v03r10.nc.gz'
+    # ibtracks url
+    url = 'https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r00/access/netcdf/'
+    fn = 'IBTrACS.ALL.v04r00.nc'
 
-    p_down = op.dirname(p_ncfile)
-    p_gz = op.join(p_down, '{0}'.format(fil_down))
-    p_temp = op.join(p_down, 'tempdl.nc')  # temporal file
+    # prepare download folder
+    if not op.isdir(p_store): os.makedirs(p_store)
 
-    # download gz
-    ftp_wmo = '{0}{1}'.format(ftp_down, fil_down)
-    if not op.isfile(p_gz):
-        urllib.request.urlretrieve(ftp_wmo, p_gz)
+    # download file
+    remote = url + fn
+    local = op.join(p_store, fn)
 
-    # decompress .gz file
-    with gzip.open(p_gz, 'rb') as f_in, open(p_temp, 'wb') as f_out:
-        shutil.copyfileobj(f_in, f_out)
+    with requests.get(remote) as fr, open(local, 'wb')as fl:
+        fl.write(fr.content)
 
-    # load and return xarray.Dataset
-    xds_wmo = xr.open_dataset(p_temp).copy()
+    print("{0} downloaded.".format(local))
 
-    # set lon to 0-360
-    lon_wmo = xds_wmo.lon_wmo.values[:]
-    lon_wmo[np.where(lon_wmo<0)] = lon_wmo[np.where(lon_wmo<0)]+360
-    xds_wmo['lon_wmo'].values[:] = lon_wmo
-
-    # store changes
-    xds_wmo.to_netcdf(p_ncfile, 'w')
-
-    # remove temp files
-    os.remove(p_temp)
-    os.remove(p_gz)
+    return xr.open_dataset(local)
 
 def download_sst_v5(p_store, overwrite=False):
     '''
