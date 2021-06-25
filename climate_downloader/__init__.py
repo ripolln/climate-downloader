@@ -10,6 +10,8 @@ __description__ = 'climate databases downloader'
 __keywords__    = 'ocean data xarray download'
 
 from . import csiro
+from . import gebco
+from . import gshhg
 from . import mjo
 from . import noaa
 
