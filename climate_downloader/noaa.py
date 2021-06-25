@@ -40,12 +40,13 @@ def download_ibtracs_all(p_store):
 
     return xr.open_dataset(local)
 
-def download_sst_v5(p_store, overwrite=False):
+def download_sst_v5(p_store, year_limits=(None, None), overwrite=False):
     '''
     Download NOAA SST data and stores it on netcdf format
 
-    p_store    - path to store downloaded data
-    overwrite  - True for overwriting previously downloaded files
+    p_store      - path to store downloaded data
+    year_limits  - optional. Start and end years to download
+    overwrite    - True for overwriting previously downloaded files
     '''
     # prepare download folder
     p_dl = op.join(p_store, 'sst_v5.download')  # temp storage of monthly files
@@ -55,10 +56,34 @@ def download_sst_v5(p_store, overwrite=False):
     url = 'https://www1.ncdc.noaa.gov/pub/data/cmb/ersst/v5/netcdf/'
     code = 'ersst.v5'
 
-    # get files at public folder
-    page = requests.get(url)
+    # activate a requests session
+    s = requests.Session()
+
+    # get files at public folder (tryouts)
+    sc = 999
+    cts = 1
+    max_cts = 10
+    while sc != 200:
+        print('establishing connection... tryout number {0}/{1}'.format(cts, max_cts))
+        page = s.get(url)
+        sc = page.status_code
+        cts +=1
+
+        # break if unable to connect
+        if cts == max_cts:
+            print('Unable to query NOAA database. Try again later')
+            return None
+
     soup = BeautifulSoup(page.text, 'html.parser')
     fs = ['{0}{1}'.format(url, n.get('href')) for n in soup.find_all('a') if n.get('href').startswith(code)]
+
+    # filter files by year
+    if year_limits[0]:
+        yy = [f for f in fs if str(year_limits[0]) in f][0]
+        fs = fs[fs.index(yy):]
+    if year_limits[1]:
+        yy = [f for f in fs if str(year_limits[1]) in f][-1]
+        fs = fs[:fs.index(yy)+1]
 
     # download files
     print('downloading files ')
@@ -71,10 +96,20 @@ def download_sst_v5(p_store, overwrite=False):
         if overwrite == False and op.isfile(local):
             continue
 
-        with requests.get(remote) as fr, open(local, 'wb')as fl:
-            fl.write(fr.content)
-        print(fn)
+        # download file (with retries)
+        ret = True
+        while ret:
 
+            # retry if bad status code
+            fr = s.get(remote)
+            if fr.status_code == 200:
+
+               # write local file and stop retry
+                with open(local, 'wb') as fl:
+                    fl.write(fr.content)
+                ret = False
+
+        print(fn)
     print()
 
     # join files
