@@ -16,7 +16,7 @@ def _reqs(*f):
     return [
         _pip_requirement(r) for r in (
             _strip_comments(l) for l in open(
-                os.path.join(os.getcwd(), 'requirements', *f)).readlines()
+                os.path.join(os.getcwd(), *f)).readlines()
         ) if r]
 
 def reqs(*f):
@@ -48,11 +48,11 @@ setup(
     packages         = ['climate_downloader', 'climate_downloader.test'],
     package_data     = {'climate_downloader' : ['resources/*']},
     scripts          = [
-	'scripts/download/download_csiro_area.py',
-	'scripts/download/download_csiro_pointlist.py',
-	'scripts/download/download_csiro_datamap.py',
-	'scripts/download/download_mjo.py',
-	'scripts/download/download_noaa_wmo.py',
+	#'scripts/download/download_csiro_area.py',
+	#'scripts/download/download_csiro_pointlist.py',
+	#'scripts/download/download_csiro_datamap.py',
+	#'scripts/download/download_mjo.py',
+	#'scripts/download/download_noaa_wmo.py',
 	],
 )
 
